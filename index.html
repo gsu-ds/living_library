@@ -37,6 +37,7 @@
             border-left: 2px solid #4a9eff;
             padding: 30px;
             overflow-y: auto;
+            transition: transform 0.3s ease, width 0.1s;
             box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
         }
         
@@ -182,7 +183,55 @@
         
         .app-highlight strong {
             color: #00d4ff;
-        }
+        } 
+        
+        #sidebar.collapsed {
+        transform: translateX(100%);
+    }
+
+    #resize-handle {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 10px;
+        height: 100%;
+        cursor: ew-resize;
+        background: transparent;
+        transition: background 0.2s;
+    }
+
+    #resize-handle:hover {
+        background: rgba(74, 158, 255, 0.3);
+    }
+
+    #resize-handle.dragging {
+        background: rgba(74, 158, 255, 0.5);
+    }
+
+    #toggle-sidebar {
+        position: fixed;
+        right: 360px;
+        top: 20px;
+        background: rgba(20, 20, 30, 0.9);
+        border: 2px solid #4a9eff;
+        color: #4a9eff;
+        padding: 10px 15px;
+        cursor: pointer;
+        font-family: 'Monaco', monospace;
+        font-size: 11px;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    #toggle-sidebar:hover {
+        background: rgba(74, 158, 255, 0.2);
+    }
+
+    #toggle-sidebar.collapsed {
+        right: 20px;
+    }
+        
         
         @keyframes pulse {
             0%, 100% {
@@ -210,8 +259,9 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    
+    <button id="toggle-sidebar">◀ Hide Panel</button>
     <div id="sidebar">
+        <div id="resize-handle"></div>
         <div class="logo">LIVING LIBRARY</div>
         <div class="subtitle">Interactive Knowledge Network</div>
         
@@ -728,6 +778,51 @@
         });
         
         animate();
+        // Sidebar toggle functionality
+const sidebar = document.getElementById('sidebar');
+const toggleBtn = document.getElementById('toggle-sidebar');
+const resizeHandle = document.getElementById('resize-handle');
+
+let isResizing = false;
+let sidebarWidth = 350;
+
+toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    toggleBtn.classList.toggle('collapsed');
+    
+    if (sidebar.classList.contains('collapsed')) {
+        toggleBtn.textContent = '▶ Show Panel';
+    } else {
+        toggleBtn.textContent = '◀ Hide Panel';
+    }
+});
+
+// Resize functionality
+resizeHandle.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    resizeHandle.classList.add('dragging');
+    canvas.style.cursor = 'ew-resize';
+    e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    
+    const newWidth = window.innerWidth - e.clientX;
+    if (newWidth >= 250 && newWidth <= 600) {
+        sidebarWidth = newWidth;
+        sidebar.style.width = `${newWidth}px`;
+        toggleBtn.style.right = `${newWidth + 10}px`;
+    }
+});
+
+document.addEventListener('mouseup', () => {
+    if (isResizing) {
+        isResizing = false;
+        resizeHandle.classList.remove('dragging');
+        canvas.style.cursor = 'grab';
+    }
+});
     </script>
 </body>
 </html>
