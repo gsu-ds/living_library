@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Network</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #e8e5e0;
+            overflow: hidden;
+            color: #333;
+        }
+        
+        #canvas {
+            display: block;
+            cursor: grab;
+        }
+        
+        #canvas:active {
+            cursor: grabbing;
+        }
+        
+        #sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 320px;
+            height: 100vh;
+            background: #fff;
+            border-left: 1px solid #ccc;
+            padding: 40px 30px;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            border-top: 1px dashed #999;
+            padding-top: 15px;
+        }
+        
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-content {
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .toggle {
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .project-link {
+            color: #000;
+            text-decoration: none;
+            border-bottom: 1px solid #000;
+            transition: opacity 0.2s;
+        }
+        
+        .project-link:hover {
+            opacity: 0.6;
+        }
+        
+        #info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 11px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+                top: auto;
+                bottom: 0;
+                border-left: none;
+                border-top: 1px solid #ccc;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div id="sidebar">
+        <div class="section">
+            <div class="section-title">
+                <span>● INDEX</span>
+                <span class="toggle">−</span>
+            </div>
+            <div class="section-content">
+                Click on any node to explore projects. Drag to pan around the network.
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                <span>▲ PROJECTS</span>
+                <span class="toggle">+</span>
+            </div>
+            <div class="section-content" style="display: none;">
+                Interactive visualizations and experiments connecting ideas across domains.
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                <span>■ RESEARCH</span>
+                <span class="toggle">+</span>
+            </div>
+            <div class="section-content" style="display: none;">
+                Explorations in data visualization, interaction design, and creative coding.
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                <span>● CONTACT</span>
+                <span class="toggle">+</span>
+            </div>
+            <div class="section-content" style="display: none;">
+                <a href="https://github.com/yourusername" class="project-link">GitHub</a> • 
+                <a href="mailto:your@email.com" class="project-link">Email</a>
+            </div>
+        </div>
+    </div>
+    
+    <div id="info">Drag to explore • Click nodes for details</div>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        
+        // Camera/pan variables
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        
+        // Define your projects as nodes
+        const nodes = [
+            { 
+                id: 'center', 
+                x: 0, 
+                y: 0, 
+                label: 'Your Name\nPortfolio', 
+                type: 'center',
+                url: '#'
+            },
+            { 
+                id: 'project1', 
+                x: -200, 
+                y: -150, 
+                label: 'Machine Learning\nProject', 
+                type: 'square',
+                url: 'https://github.com/yourusername/ml-project'
+            },
+            { 
+                id: 'project2', 
+                x: 200, 
+                y: -100, 
+                label: 'Web App\nDashboard', 
+                type: 'triangle',
+                url: 'https://github.com/yourusername/dashboard'
+            },
+            { 
+                id: 'project3', 
+                x: -150, 
+                y: 180, 
+                label: 'Data Viz\nTool', 
+                type: 'circle',
+                url: 'https://github.com/yourusername/dataviz'
+            },
+            { 
+                id: 'project4', 
+                x: 180, 
+                y: 150, 
+                label: 'API Service', 
+                type: 'triangle',
+                url: 'https://github.com/yourusername/api'
+            },
+            { 
+                id: 'project5', 
+                x: 0, 
+                y: -250, 
+                label: 'Research Paper', 
+                type: 'square',
+                url: '#'
+            },
+            { 
+                id: 'project6', 
+                x: -300, 
+                y: 50, 
+                label: 'Creative Coding', 
+                type: 'circle',
+                url: 'https://github.com/yourusername/creative'
+            },
+        ];
+        
+        // Define connections between nodes
+        const connections = [
+            { from: 'center', to: 'project1', style: 'solid' },
+            { from: 'center', to: 'project2', style: 'dashed' },
+            { from: 'center', to: 'project3', style: 'solid' },
+            { from: 'center', to: 'project4', style: 'dashed' },
+            { from: 'project1', to: 'project5', style: 'solid' },
+            { from: 'project1', to: 'project6', style: 'dashed' },
+            { from: 'project2', to: 'project4', style: 'dashed' },
+        ];
+        
+        let hoveredNode = null;
+        
+        // Center the view initially
+        offsetX = width / 2;
+        offsetY = height / 2;
+        
+        function drawNode(node) {
+            const screenX = node.x + offsetX;
+            const screenY = node.y + offsetY;
+            const isHovered = hoveredNode === node;
+            
+            ctx.save();
+            ctx.translate(screenX, screenY);
+            
+            // Draw shape based on type
+            if (node.type === 'center') {
+                ctx.fillStyle = isHovered ? '#ff6b35' : '#ff4500';
+                ctx.beginPath();
+                ctx.arc(0, 0, 12, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (node.type === 'circle') {
+                ctx.strokeStyle = isHovered ? '#000' : '#333';
+                ctx.lineWidth = isHovered ? 2.5 : 1.5;
+                ctx.beginPath();
+                ctx.arc(0, 0, 8, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (node.type === 'square') {
+                ctx.strokeStyle = isHovered ? '#000' : '#333';
+                ctx.lineWidth = isHovered ? 2.5 : 1.5;
+                ctx.strokeRect(-7, -7, 14, 14);
+            } else if (node.type === 'triangle') {
+                ctx.strokeStyle = isHovered ? '#000' : '#333';
+                ctx.lineWidth = isHovered ? 2.5 : 1.5;
+                ctx.beginPath();
+                ctx.moveTo(0, -8);
+                ctx.lineTo(7, 7);
+                ctx.lineTo(-7, 7);
+                ctx.closePath();
+                ctx.stroke();
+            }
+            
+            // Draw label
+            ctx.fillStyle = isHovered ? '#000' : '#555';
+            ctx.font = isHovered ? 'bold 12px Courier New' : '11px Courier New';
+            ctx.textAlign = 'center';
+            
+            const lines = node.label.split('\n');
+            lines.forEach((line, i) => {
+                ctx.fillText(line, 0, 25 + i * 14);
+            });
+            
+            ctx.restore();
+        }
+        
+        function drawConnection(conn) {
+            const fromNode = nodes.find(n => n.id === conn.from);
+            const toNode = nodes.find(n => n.id === conn.to);
+            
+            if (!fromNode || !toNode) return;
+            
+            const x1 = fromNode.x + offsetX;
+            const y1 = fromNode.y + offsetY;
+            const x2 = toNode.x + offsetX;
+            const y2 = toNode.y + offsetY;
+            
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1;
+            
+            if (conn.style === 'dashed') {
+                ctx.setLineDash([5, 5]);
+            } else {
+                ctx.setLineDash([]);
+            }
+            
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        function render() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw all connections first
+            connections.forEach(drawConnection);
+            
+            // Draw all nodes
+            nodes.forEach(drawNode);
+        }
+        
+        function getNodeAtPosition(x, y) {
+            for (let node of nodes) {
+                const screenX = node.x + offsetX;
+                const screenY = node.y + offsetY;
+                const dist = Math.sqrt((x - screenX) ** 2 + (y - screenY) ** 2);
+                if (dist < 30) return node;
+            }
+            return null;
+        }
+        
+        // Mouse events
+        canvas.addEventListener('mousedown', (e) => {
+            const node = getNodeAtPosition(e.clientX, e.clientY);
+            if (node) {
+                window.open(node.url, '_blank');
+            } else {
+                isDragging = true;
+                dragStartX = e.clientX - offsetX;
+                dragStartY = e.clientY - offsetY;
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                offsetX = e.clientX - dragStartX;
+                offsetY = e.clientY - dragStartY;
+                render();
+            } else {
+                const node = getNodeAtPosition(e.clientX, e.clientY);
+                if (node !== hoveredNode) {
+                    hoveredNode = node;
+                    canvas.style.cursor = node ? 'pointer' : 'grab';
+                    render();
+                }
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+        
+        // Sidebar toggles
+        document.querySelectorAll('.section-title').forEach(title => {
+            title.addEventListener('click', () => {
+                const content = title.nextElementSibling;
+                const toggle = title.querySelector('.toggle');
+                
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    toggle.textContent = '−';
+                } else {
+                    content.style.display = 'none';
+                    toggle.textContent = '+';
+                }
+            });
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            render();
+        });
+        
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
