@@ -257,13 +257,66 @@
         }
         
         @media (max-width: 968px) {
-            #sidebar {
-                width: 100%;
-                height: auto;
-                max-height: 50vh;
-                top: auto;
-                bottom: 0;
-                border-left: none;
-                border-top: 2px solid #4a9eff;
-            }
-        }
+    #sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 50vh;
+        top: auto;
+        bottom: 0;
+        border-left: none;
+        border-top: 2px solid #4a9eff;
+        padding: 20px;
+    }
+    
+    #sidebar.collapsed {
+        transform: translateY(100%);  /* Slide down instead of right */
+    }
+    
+    #toggle-sidebar {
+        right: 20px;
+        top: auto;
+        bottom: 20px;
+    }
+    
+    #toggle-sidebar.collapsed {
+        right: 20px;
+        bottom: 20px;
+    }
+    
+    #legend-box {
+        top: 10px;
+        left: 10px;
+        padding: 10px 15px;
+        max-width: calc(100vw - 120px);  /* Leave space for toggle button */
+    }
+    
+    #legend-box .legend-title {
+        font-size: 10px;
+        margin-bottom: 8px;
+    }
+    
+    .legend-item {
+        font-size: 10px;
+        margin: 5px 0;
+    }
+    
+    .legend-shape {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+    }
+    
+    .legend-shape.triangle {
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 14px solid #4a9eff;
+    }
+    
+    #info {
+        display: none;  /* Hide on mobile to reduce clutter */
+    }
+    
+    #resize-handle {
+        display: none;  /* No resizing on mobile */
+    }
+}
