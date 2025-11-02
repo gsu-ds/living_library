@@ -1,6 +1,11 @@
+<<<<<<< HEAD
 # The Living Library 
 
 ### About Me
+=======
+## Howdy 👋
+My name is Josh, thank you for checking out my page! Here is my App!: [Living Library (v3)](https://joshuapina.github.io)
+>>>>>>> ea96e45 (Update: index.html moved out of subfolder for static webpage.)
 
 My name is Josh, thank you for checking out my page! 
 

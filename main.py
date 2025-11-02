@@ -137,7 +137,7 @@ class SearchResult(BaseModel):
 @app.get("/")
 async def root():
     """Serve the main index page."""
-    return FileResponse(BASE_DIR / "static/index.html")
+    return FileResponse(BASE_DIR / "index.html")
 
 
 @app.get("/api/health")
