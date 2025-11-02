@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Viewer</title>
+    <style>
+        html, body { font-family: sans-serif; background-color: #333; color: white; margin: 0; height: 100%; }
+        header { padding: 15px 30px; background-color: #111; border-bottom: 2px solid #4a9eff; }
+        header a { color: #4a9eff; text-decoration: none; }
+        h1 { margin: 0; font-size: 1.5em; }
+        .content-wrapper { display: flex; flex-direction: column; height: calc(100% - 60px); }
+
+        /* Page-by-page viewer (for local files) */
+        #local-viewer { text-align: center; }
+        #viewer-controls { text-align: center; padding: 15px; background: #222; }
+        #viewer-controls button { padding: 8px 16px; font-size: 16px; cursor: pointer; }
+        #page-info { margin: 0 20px; font-size: 18px; }
+        #image-container { text-align: center; padding-top: 20px; }
+        #pdf-page-image { max-width: 90vw; border: 1px solid #555; }
+
+        /* Iframe viewer (for Supabase files) */
+        #supabase-viewer { flex-grow: 1; }
+        #pdf-iframe { width: 100%; height: 100%; border: none; }
+
+        .hidden { display: none; }
+        footer { text-align: center; padding: 15px; background: #111; border-top: 1px solid #333; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><a href="/app/browse.html">← Back to Library</a></h1>
+    </header>
+
+    <div class="content-wrapper">
+        <div id="supabase-viewer">
+            <iframe id="pdf-iframe" src=""></iframe>
+        </div>
+
+        <div id="local-viewer" class="hidden">
+            <div id="viewer-controls">
+                <button id="prev-page">Previous</button>
+                <span id="page-info">Page <span id="current-page">1</span></span>
+                <button id="next-page">Next</button>
+            </div>
+            <div id="image-container">
+                <img id="pdf-page-image" src="" alt="Loading page...">
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Living Library Project - Database Systems
+    </footer>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const materialId = urlParams.get('id');
+
+        // Local viewer elements
+        const localViewer = document.getElementById('local-viewer');
+        const pageNumSpan = document.getElementById('current-page');
+        const imgElement = document.getElementById('pdf-page-image');
+        let currentPage = 1;
+
+        // Supabase viewer elements
+        const supabaseViewer = document.getElementById('supabase-viewer');
+        const iframeElement = document.getElementById('pdf-iframe');
+
+        // --- Main Function ---
+        async function loadMaterial() {
+            if (!materialId) {
+                document.body.innerHTML = "<h1>Error: No Material ID provided.</h1>";
+                return;
+            }
+
+            try {
+                const infoResponse = await fetch(`/api/material/${materialId}/info`);
+                if (!infoResponse.ok) {
+                    throw new Error(await infoResponse.text());
+                }
+                const info = await infoResponse.json();
+
+                document.title = info.title; // Set page title
+
+                if (info.type === 'supabase') {
+                    // Use iframe viewer
+                    supabaseViewer.classList.remove('hidden');
+                    iframeElement.src = info.url;
+
+                } else if (info.type === 'local') {
+                    // Use local page-by-page viewer
+                    localViewer.classList.remove('hidden');
+                    supabaseViewer.classList.add('hidden'); // Hide the iframe
+                    loadLocalPage(currentPage); // Load the first page
+                }
+
+            } catch (error) {
+                console.error('Error loading material:', error);
+                document.body.innerHTML = `<h1>Error loading material.</h1><p>${error.message}</p>`;
+            }
+        }
+
+        // --- Local Viewer Functions ---
+        async function loadLocalPage(page) {
+            try {
+                const response = await fetch(`/api/pdf/${materialId}/page/${page}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load page ${page}. Does it exist?`);
+                }
+                const imageBlob = await response.blob();
+                const imageUrl = URL.createObjectURL(imageBlob);
+                imgElement.src = imageUrl;
+                pageNumSpan.textContent = page;
+                currentPage = page;
+            } catch (error) {
+                console.error('Error loading page:', error);
+                alert(error.message);
+            }
+        }
+
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentPage > 1) {
+                loadLocalPage(currentPage - 1);
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            loadLocalPage(currentPage + 1);
+        });
+
+        // --- Load the material on page start ---
+        loadMaterial();
+    </script>
+</body>
+</html>

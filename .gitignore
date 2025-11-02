@@ -1,0 +1,13 @@
+# Python virtual environment
+libvenv/
+*venv/
+venv/
+# Python cache files
+__pycache__/
+*.pyc
+# Environment variables
+.env
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+# Log files
+*.log

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Living Library - Browse Materials</title>
+    
+    <link rel="stylesheet" href="/app/styles.css">
+</head>
+
+<body>
+ <header>
+    <h1>Living Library</h1>
+    <p>Browse all available materials!!!</p>
+    </header>
+
+<style>
+    header { padding: 20px; background-color: white; border-bottom: 2px solid #ddd; }
+    footer { text-align: center; padding: 20px; background: #eee; border-top: 1px solid #ddd; margin-top: 40px; }
+</style>
+    
+    <main>
+        <div id="bookGrid">
+            <p>Loading materials...</p>
+        </div>
+    </main>
+    
+    <script src="/app/scripts.js"></script>
+    
+    <script>
+        // This runs the main function from your script once the page is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLibrary('all'); // Load all materials by default
+        });
+    </script>
+    <footer> 
+        Living Library Project - Database Systems
+    </footer>
+</body>
+</html>
