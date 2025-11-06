@@ -1,7 +1,7 @@
 ## Howdy 👋
 My name is Josh, thank you for checking out my page! Here is my App!: [Living Library (v3)](https://joshuapina.github.io)
 
-My name is Josh, thank you for checking out my page! 
+
 
 **History:** Data Science Senior | Program Manager | U.S Army Veteran<br>
 **Memberships:** ColorStack | CodePath (Prior Student, Current Peer Mentor)<br>
