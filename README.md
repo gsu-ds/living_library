@@ -3,9 +3,9 @@ My name is Josh, thank you for checking out my page! Here is my App!: [Living Li
 
 
 
-**History:** Data Science Senior | Program Manager | U.S Army Veteran<br>
-**Memberships:** ColorStack | CodePath (Prior Student, Current Peer Mentor)<br>
-**Cohorts:** FourBlock (Fall 2025) | Syracuse University O2O (Fall 2025, AWS Solutions Architect)
+**History:** Data Science Senior    ||  Program Manager                                              ||  U.S Army Veteran<br>
+**Memberships:** ColorStack         ||  CodePath (Prior Student, Current Peer Mentor)<br>
+**Cohorts:** FourBlock (Fall 2025)  ||  Syracuse University O2O (Fall 2025, AWS Solutions Architect)
 
 Here is my App! [Living Library (v3)](https://joshuapina.github.io)
 
