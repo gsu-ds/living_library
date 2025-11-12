@@ -1,13 +1,13 @@
 ## Howdy 👋
-My name is Josh, thank you for checking out my page! Here is my App!: [Living Library (v3)](https://joshuapina.github.io)
+My name is Josh, thank you for checking out my page!
 
 
 
-**History:** Data Science Senior    \|  Program Manager                                             \|  U.S Army Veteran<br>
+**History:** Data Science Senior \|  Program Manager \|  U.S Army Veteran<br>
 **Memberships:** ColorStack        \|  CodePath (Prior Student, Current Peer Mentor)<br>
 **Cohorts:** FourBlock (Fall 2025)  \|  Syracuse University O2O (Fall 2025, AWS Solutions Architect)
 
-Here is my App! [Living Library (v3)](https://joshuapina.github.io)
+Here is my App! [Living Library (v3)->not updated yet(google redirect)](https://www.google.com)
 
 --- 
 ### Abstract 
@@ -47,59 +47,6 @@ This project uses [GitHub Codespaces](https://github.com/features/codespaces) to
 
 ## Project Website
 
-👉 [View website](https://joshuapina.github.io/KBRT-for-HNSCC/)
+👉 [View website(not updated yet->google redirect)](https://www.google.com/)
 
 ---
-
-
-# The Living Library
-
-## Howdy 👋
-My name is Josh, thank you for checking out my page! Here is my App!: [Living Library (v3)](https://joshuapina.github.io)
-
-- 🔭 I'm a U.S. Army Veteran, current Program Manager, and a Data Science senior, completing my final semester at Georgia State University.
-- I am a member of ColorStack and CodePath, where I serve as a Peer Mentor.
-- This Fall, I am a member of the 2025 FourBlock Cohort and Syracuse University's O2O Cohort (AWS Solutions Architect).
- 
-### Abstract 
-The Living Library is an application I am building that stores, organizes, and retrieves all the study materials I have compiled throughout my Data Science journey. <br>This app will include rich metadata, learning workflows, and the ability to utilize vector searches.
-
-### Infrastructure
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
-
---Need to add:
--Supabase
--FastAPI
--Render
-
-##  Development Environment
-
-This project uses [GitHub Codespaces](https://github.com/features/codespaces) to ensure a consistent, reproducible development setup.
-
---- 
-
-### Quick Start
-
-1. **Open in Codespaces**  
-   Click the green **Code** button on this repository, then choose **Open with Codespaces** → **New codespace**.
-
-2. **Automatic setup**  
-   The dev container will automatically install Python and all required packages listed in `requirements.txt`.
-
-3. **Activate the environment**  
-   When your Codespace starts, you’re ready to run scripts and notebooks immediately.
-
----
-
-## Project Website
-
-👉 [View website](https://joshuapina.github.io/KBRT-for-HNSCC/)
-
----
-
