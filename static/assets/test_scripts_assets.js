@@ -18,6 +18,7 @@
             'Artificial Intelligence': 4,
             'Big Data': 3,
             'Computer Vision': 4,
+            'Data Analysis': 0,
             'Data Science': 10,
             'Deep Learning': 4,
             'Ethics': 1,
@@ -42,15 +43,15 @@
                 url: '/static/app/browse.html'
             },
         
-            // Core ML/AI cluster
+            // Core Data Science node cluster
             { 
-                id: 'ml', 
+                id: 'ds', 
                 x: 0, 
                 y: -200, 
-                label: 'Machine\nLearning', 
+                label: 'Data\nScience', 
                 type: 'circle',
-                description: 'Core ML algorithms, theory, and applications',
-                materials: `${domainCounts['Machine Learning']} materials`
+                description: '3 core fields walk into a bar...data analysis, computer science and statistics. Then they fusion dance. The end.',
+                materials: `${domainCounts['Data Science']} materials`
             },
             { 
                 id: 'ai', 
@@ -87,7 +88,7 @@
                 y: 120, 
                 label: 'Data\nScience', 
                 type: 'circle',
-                description: 'Data analysis, visualization, and scientific computing',
+                description: '3 core fields walk into a bar...data analysis, computer science and statistics. Then they fusion dance. The end.',
                 materials: `${domainCounts['Data Science']} materials`
             },
             
