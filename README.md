@@ -1,8 +1,10 @@
-# The Living Library 
+# The Living Library
 
-### About Me
-
-My name is Josh, thank you for checking out my project! 
+Joshua Piña, Computer Science Department, Georgia State University
+---
+**History:** Data Science Senior | Program Manager | U.S Army Veteran<br>
+**Memberships:** FourBlock | ColorStack | CodePath (Prior Student, Current Peer Mentor)<br>
+**Cohorts:** Syracuse University O2O (Fall 2025, AWS Solutions Architect)
 
 **History:** Data Science Senior | Program Manager | U.S Army Veteran<br>
 **Memberships:** ColorStack | CodePath (Prior Student, Current Peer Mentor)<br>
@@ -45,5 +47,6 @@ This project uses [GitHub Codespaces](https://github.com/features/codespaces) to
    When your Codespace starts, you’re ready to run scripts and notebooks immediately.
 
 ---
+
 
 
