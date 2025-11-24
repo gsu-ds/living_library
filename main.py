@@ -311,7 +311,14 @@ async def browse_library(
             params = {}
             
             if topic:
-                query += " AND t.topic_name = :topic"
+                query += """
+                    AND m.material_id IN (
+                        SELECT mt2.material_id
+                        FROM material_topic mt2
+                        JOIN topic t2 ON t2.topic_id = mt2.topic_id
+                        WHERE t2.topic_name = :topic
+                    )
+                """
                 params['topic'] = topic
             
             if tier:
