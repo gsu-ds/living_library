@@ -1,52 +1,104 @@
 # The Living Library
 
-Joshua Piña, Computer Science Department, Georgia State University
----
-**History:** Data Science Senior | Program Manager | U.S Army Veteran<br>
-**Memberships:** FourBlock | ColorStack | CodePath (Prior Student, Current Peer Mentor)<br>
-**Cohorts:** Syracuse University O2O (Fall 2025, AWS Solutions Architect)
+The Living Library is a comprehensive digital asset management system designed to store, organize, and retrieve study materials. It leverages modern web technologies and machine learning to provide rich metadata, learning workflows, and semantic search capabilities.
 
-**History:** Data Science Senior | Program Manager | U.S Army Veteran<br>
-**Memberships:** ColorStack | CodePath (Prior Student, Current Peer Mentor)<br>
-**Cohorts:** FourBlock (Fall 2025) | Syracuse University O2O (Fall 2025, AWS Solutions Architect)
+## Features
 
-Here is my App! [Living Library (v3)](https://joshuapina.github.io)
+- **Semantic Search**: Utilize vector embeddings to search for materials based on meaning rather than just keywords.
+- **PDF Management**: Upload, store, and view PDF documents directly within the application.
+- **Hybrid Storage**: Supports file storage both locally and via Supabase Storage.
+- **Metadata Management**: Rich tagging with topics, authors, and tiers.
+- **Duplicate Detection**: Automated detection of potential duplicate materials.
 
---- 
-### Abstract 
-The Living Library is an application I am building that stores, organizes, and retrieves all the study materials I have compiled throughout my Data Science journey. This app will include rich metadata, learning workflows, and the ability to utilize vector searches.
+## Tech Stack
 
-### Infrastructure
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+- **Backend**: Python, FastAPI
+- **Database**: PostgreSQL (with `pgvector` for embeddings)
+- **ORM**: SQLAlchemy (Async)
+- **ML/AI**: Sentence Transformers (for generating embeddings)
+- **PDF Processing**: PyMuPDF
+- **Storage**: Local Filesystem / Supabase Storage
 
+## Prerequisites
 
---Need to add:
--Supabase
--FastAPI
--Render
+Before you begin, ensure you have the following installed:
 
----
+- **Python 3.10+**
+- **PostgreSQL 15+** (with `pgvector` extension enabled)
+- **Supabase Account** (optional, for cloud storage)
 
-##  Development Environment
+## Installation
 
-This project uses [GitHub Codespaces](https://github.com/features/codespaces) to ensure a consistent, reproducible development setup.
+1.  **Clone the repository**:
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
 
-### Quick Start
+2.  **Create a virtual environment** (recommended):
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
 
-1. **Open in Codespaces**  
-   Click the green **Code** button on this repository, then choose **Open with Codespaces** → **New codespace**.
+3.  **Install dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-2. **Automatic setup**  
-   The dev container will automatically install Python and all required packages listed in `requirements.txt`.
+## Configuration
 
-3. **Activate the environment**  
-   When your Codespace starts, you’re ready to run scripts and notebooks immediately.
+Create a `.env` file in the root directory with the following variables:
 
----
+```env
+# Database Connection
+# Format: postgresql://user:password@host:port/dbname
+DATABASE_URL=postgresql://postgres:password@localhost:5432/living_library
 
+# Supabase Configuration (Optional if using local storage only)
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
 
+# Local PDF Storage Path
+PDF_BASE_DIR=./pdfs
+```
 
+**Note**: The application automatically converts `postgresql://` to `postgresql+asyncpg://` for async compatibility.
+
+## Running the Application
+
+1.  **Start the server**:
+    ```bash
+    python main.py
+    ```
+    Alternatively, you can run it using `uvicorn` directly:
+    ```bash
+    uvicorn main:app --reload
+    ```
+
+2.  **Access the Application**:
+    -   **Web Interface**: Open `http://localhost:8000` in your browser.
+    -   **API Documentation (Swagger UI)**: Open `http://localhost:8000/docs`.
+    -   **ReDoc**: Open `http://localhost:8000/redoc`.
+
+## API Documentation
+
+The backend provides a RESTful API documented via OpenAPI. Key endpoints include:
+
+-   `GET /api/library/browse`: Browse materials with filters (topic, tier, status).
+-   `POST /api/search/semantic`: Perform semantic search on document chunks.
+-   `GET /api/pdf/{id}/page/{num}`: Retrieve a specific page of a PDF as an image.
+-   `GET /api/stats`: View library statistics.
+
+For full details, refer to the `/docs` endpoint when the server is running.
+
+## Development
+
+This project includes a `devcontainer` configuration for use with GitHub Codespaces, ensuring a consistent development environment.
+
+### Project Structure
+
+-   `main.py`: The entry point for the FastAPI application.
+-   `python/`: Helper scripts and notebooks.
+-   `static/`: Static assets (HTML, CSS, JS) for the frontend.
+-   `sql/`: Database schema and migration scripts (if applicable).

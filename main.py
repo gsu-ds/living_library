@@ -1,4 +1,13 @@
-# main.py -FastAPI Backend for Living Library
+"""
+FastAPI Backend for Living Library.
+
+This module serves as the entry point for the Living Library backend application.
+It provides API endpoints for managing and searching a digital library of materials,
+including PDF processing, semantic search using vector embeddings, and database interactions.
+
+The application uses FastAPI for the web framework, SQLAlchemy for asynchronous database
+operations, and Supabase for authentication and storage in some contexts.
+"""
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
@@ -63,7 +72,19 @@ async_session = async_sessionmaker(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load resources at startup, cleanup at shutdown."""
+    """
+    Manage the lifecycle of the FastAPI application.
+
+    This context manager handles startup and shutdown events.
+    On startup, it loads the global embedding model.
+    On shutdown, it disposes of the database engine.
+
+    Args:
+        app (FastAPI): The FastAPI application instance.
+
+    Yields:
+        None: Control is yielded back to the application.
+    """
     global embedding_model
     
     # Startup
@@ -104,6 +125,20 @@ app.add_middleware(
 # ============================================================================
 
 class Material(BaseModel):
+    """
+    Represents a material (book, article, etc.) in the library.
+
+    Attributes:
+        material_id (int): Unique identifier for the material.
+        title (str): Title of the material.
+        subtitle (Optional[str]): Subtitle of the material, if any.
+        edition (Optional[str]): Edition of the material (e.g., "2nd Edition").
+        year (Optional[int]): Publication year.
+        type (Optional[str]): Type of material (e.g., "Book", "Paper").
+        tier (Optional[int]): Importance tier (1-3).
+        status (Optional[str]): Processing status (e.g., "pending", "processed").
+        topic (Optional[str]): Primary topic associated with the material.
+    """
     material_id: int
     title: str
     subtitle: Optional[str] = None
@@ -115,6 +150,16 @@ class Material(BaseModel):
     topic: Optional[str] = None
 
 class SearchRequest(BaseModel):
+    """
+    Represents a search request payload for semantic search.
+
+    Attributes:
+        query (str): The search query text.
+        topic (Optional[str]): Filter results by topic.
+        year_min (Optional[int]): Filter results by minimum publication year.
+        year_max (Optional[int]): Filter results by maximum publication year.
+        limit (int): Maximum number of results to return (default 10).
+    """
     query: str
     topic: Optional[str] = None
     year_min: Optional[int] = None
@@ -122,6 +167,17 @@ class SearchRequest(BaseModel):
     limit: int = 10
 
 class SearchResult(BaseModel):
+    """
+    Represents a single result from a semantic search.
+
+    Attributes:
+        chunk_id (int): Unique identifier for the text chunk.
+        material_id (int): ID of the material the chunk belongs to.
+        title (str): Title of the material.
+        page_number (int): Page number where the chunk is located.
+        chunk_text (str): The actual text content of the chunk.
+        similarity (float): Similarity score (0-1) indicating relevance to the query.
+    """
     chunk_id: int
     material_id: int
     title: str
@@ -136,13 +192,26 @@ class SearchResult(BaseModel):
 
 @app.get("/")
 async def root():
-    """Serve the main index page."""
+    """
+    Serve the main index page.
+
+    Returns:
+        FileResponse: The `index.html` file from the static directory.
+    """
     return FileResponse(BASE_DIR / "static/index.html")
 
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint."""
+    """
+    Perform a health check of the application and database connection.
+
+    This endpoint attempts to execute a simple SQL query to verify database connectivity.
+
+    Returns:
+        dict: A dictionary containing the status ("healthy" or "unhealthy") and
+              database connection state or error message.
+    """
     async with async_session() as session:
         try:
             result = await session.execute(text("SELECT 1"))
@@ -153,7 +222,18 @@ async def health_check():
 
 @app.get("/api/stats")
 async def get_stats():
-    """Get database statistics."""
+    """
+    Retrieve statistics about the library materials.
+
+    Executes a stored procedure `get_material_stats` to fetch aggregate counts
+    of materials, authors, topics, chunks, and embeddings.
+
+    Returns:
+        dict: A dictionary containing the statistics, or an error message if unavailable.
+
+    Raises:
+        HTTPException: If an error occurs during database execution (500).
+    """
     async with async_session() as session:
         try:
             result = await session.execute(
@@ -183,7 +263,24 @@ async def browse_library(
     limit: int = 100,
     offset: int = 0
 ):
-    """Browse materials with filters."""
+    """
+    Browse library materials with optional filtering and pagination.
+
+    Retrieves a list of materials joined with their topics, authors, and file assets.
+
+    Args:
+        topic (Optional[str]): Filter materials by topic name.
+        tier (Optional[int]): Filter materials by tier level.
+        status (Optional[str]): Filter materials by status.
+        limit (int): Maximum number of materials to return (default 100).
+        offset (int): Number of materials to skip for pagination (default 0).
+
+    Returns:
+        dict: A dictionary containing the total count of returned materials and the list of materials.
+
+    Raises:
+        HTTPException: If a database error occurs (500).
+    """
     async with async_session() as session:
         try:
             # Build query
@@ -266,7 +363,15 @@ async def browse_library(
 
 @app.get("/api/library/topics")
 async def get_topics():
-    """Get all unique topics."""
+    """
+    Retrieve all unique topics available in the library.
+
+    Returns:
+        dict: A dictionary containing a list of unique topic names.
+
+    Raises:
+        HTTPException: If a database error occurs (500).
+    """
     async with async_session() as session:
         try:
             result = await session.execute(
@@ -280,7 +385,23 @@ async def get_topics():
 
 @app.post("/api/search/semantic")
 async def semantic_search(request: SearchRequest):
-    """Semantic search using vector embeddings."""
+    """
+    Perform a semantic search using vector embeddings.
+
+    Encodes the search query into a vector and finds the most similar text chunks
+    stored in the database using cosine similarity (via the `<=>` operator).
+
+    Args:
+        request (SearchRequest): The search request object containing the query and filters.
+
+    Returns:
+        dict: A dictionary containing the original query and a list of matching results.
+
+    Raises:
+        HTTPException:
+            - 503: If the embedding model is not loaded.
+            - 500: If a database error occurs.
+    """
     if not embedding_model:
         raise HTTPException(status_code=503, detail="Embedding model not loaded")
     
@@ -354,16 +475,27 @@ async def semantic_search(request: SearchRequest):
 
 
 @app.get("/api/pdf/{material_id}/page/{page_num}")
-
 async def get_pdf_page(material_id: int, page_num: int):
+    """
+    Serve a specific page of a PDF as an image.
 
-    """Serve PDF page as image, fetching from local or Supabase Storage."""
+    This endpoint retrieves the PDF file from either local storage or Supabase Storage,
+    renders the requested page as an image using PyMuPDF, and returns it.
 
-   
+    Args:
+        material_id (int): The ID of the material.
+        page_num (int): The page number to retrieve (1-based index).
 
+    Returns:
+        Response: The image of the page in PNG format.
+
+    Raises:
+        HTTPException:
+            - 404: If the file metadata is not found or the page does not exist.
+            - 403: If the file is not accessible.
+            - 500: If there is an error downloading, opening, or processing the PDF.
+    """
     doc = None  # PyMuPDF document
-
-   
 
     async with async_session() as session:
 
@@ -533,6 +665,24 @@ async def get_pdf_page(material_id: int, page_num: int):
 
 @app.get("/api/material/{material_id}/info")
 async def get_material_info(material_id: int):
+    """
+    Retrieve metadata and access information for a material.
+
+    Returns the title and a direct URL (if available via Supabase) or indicates
+    that the file is local.
+
+    Args:
+        material_id (int): The ID of the material.
+
+    Returns:
+        dict: A dictionary containing the title, type ('supabase' or 'local'), and URL (if 'supabase').
+
+    Raises:
+        HTTPException:
+            - 404: If the material is not found.
+            - 403: If the material is not accessible.
+            - 500: If the Supabase client is not configured or fails to generate a URL.
+    """
     async with async_session() as session:
         result = await session.execute(
             text("""
@@ -584,7 +734,18 @@ async def get_material_info(material_id: int):
         
 @app.get("/api/duplicates")
 async def get_duplicates(status: str = "pending"):
-    """Get duplicate candidates."""
+    """
+    Retrieve a list of duplicate candidates.
+
+    Args:
+        status (str): Filter duplicates by status (default "pending").
+
+    Returns:
+        dict: A dictionary containing a list of duplicate candidates with their details.
+
+    Raises:
+        HTTPException: If a database error occurs (500).
+    """
     async with async_session() as session:
         try:
             result = await session.execute(
