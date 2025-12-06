@@ -20,7 +20,8 @@ from dotenv import load_dotenv
 from supabase import Client, create_client
 import io
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import text, select
+from sqlalchemy import text, select, event
+from pgvector.asyncpg import register_vector
 from sentence_transformers import SentenceTransformer
 import fitz  # PyMuPDF
 from pathlib import Path
@@ -32,14 +33,16 @@ load_dotenv()
 
 # Configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
-# Convert postgresql:// to postgresql+asyncpg://
+# Convert postgresql:// (or psycopg2 URLs) to postgresql+asyncpg:// for SQLAlchemy async
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+elif DATABASE_URL and DATABASE_URL.startswith("postgresql+psycopg2://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql+psycopg2://", "postgresql+asyncpg://")
 
 if not DATABASE_URL:
-    print("Error: DATABASE_URL environment variable is not set.")
-    # We might choose to exit here, or let the engine creation fail.
-    # For now, we will print a loud error but let it proceed to standard exception handling.
+    raise RuntimeError(
+        "DATABASE_URL environment variable is not set. The API cannot start without it."
+    )
 
 PDF_BASE_DIR = Path(os.getenv("PDF_BASE_DIR", BASE_DIR / "pdfs"))
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -66,6 +69,13 @@ engine = create_async_engine(
     max_overflow=20,
     connect_args=connect_args
 )
+
+
+@event.listens_for(engine.sync_engine, "connect")
+def _register_vector(dbapi_connection, connection_record):
+    """Ensure pgvector types are registered for each connection."""
+
+    register_vector(dbapi_connection)
 
 # Session factory
 async_session = async_sessionmaker(
@@ -205,9 +215,9 @@ async def root():
     Serve the main index page.
 
     Returns:
-        FileResponse: The `index.html` file from the static directory.
+        FileResponse: The `index.html` file from the project root.
     """
-    return FileResponse(BASE_DIR / "static/index.html")
+    return FileResponse(BASE_DIR / "index.html")
 
 
 @app.get("/api/health")
@@ -801,8 +811,8 @@ async def get_duplicates(status: str = "pending"):
 
 
 # Mount static files (for serving HTML/CSS/JS)
-app.mount("/assets", StaticFiles(directory=BASE_DIR / "static/assets"), name="assets")
-app.mount("/app", StaticFiles(directory=BASE_DIR / "static/app"), name="app")
+app.mount("/assets", StaticFiles(directory=BASE_DIR / "assets"), name="assets")
+app.mount("/app", StaticFiles(directory=BASE_DIR / "app"), name="app")
 
 if __name__ == "__main__":
     import uvicorn

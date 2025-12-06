@@ -53,6 +53,7 @@ Create a `.env` file in the root directory with the following variables:
 ```env
 # Database Connection
 # Format: postgresql://user:password@host:port/dbname
+# (Supabase users: use the transaction pooler URL, typically port 6543.)
 DATABASE_URL=postgresql://postgres:password@localhost:5432/living_library
 
 # Supabase Configuration (Optional if using local storage only)
@@ -63,7 +64,10 @@ SUPABASE_KEY=your_supabase_key
 PDF_BASE_DIR=./pdfs
 ```
 
-**Note**: The application automatically converts `postgresql://` to `postgresql+asyncpg://` for async compatibility.
+**Notes**:
+
+- The application automatically converts `postgresql://` (and `postgresql+psycopg2://`) to `postgresql+asyncpg://` for async compatibility with FastAPI and Supabase.
+- `DATABASE_URL` is required at startup; the API raises a clear error if it is missing.
 
 ## Running the Application
 
@@ -80,6 +84,23 @@ PDF_BASE_DIR=./pdfs
     -   **Web Interface**: Open `http://localhost:8000` in your browser.
     -   **API Documentation (Swagger UI)**: Open `http://localhost:8000/docs`.
     -   **ReDoc**: Open `http://localhost:8000/redoc`.
+
+## Chunking & Vectorization with pgvector
+
+Use the `python/vector_pipeline.py` helper to create text chunks from a PDF and
+store their embeddings in PostgreSQL (using the `vector` type). The script
+automatically creates the `vector` extension when needed and registers the type
+for async connections.
+
+```bash
+# file_id corresponds to file_asset.file_id for the PDF
+python python/vector_pipeline.py <file_id> /path/to/document.pdf \
+  --chunk-size 500 \
+  --overlap 50
+```
+
+Environment variables in `.env` (especially `DATABASE_URL`) are reused, so make
+sure they are populated before running the script.
 
 ## API Documentation
 

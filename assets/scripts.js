@@ -39,7 +39,7 @@
                 type: 'center',
                 description: 'Central hub for all Data Science learning materials',
                 materials: '55+ resources',
-                url: '/static/app/browse.html'
+                url: '/app/browse.html'
             },
         
             // Core ML/AI cluster
