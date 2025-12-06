@@ -27,3 +27,4 @@ assets/data_pdfs/
 .idea/
 *.swp
 *.swo
+.venv/
