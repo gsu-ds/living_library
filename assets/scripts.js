@@ -18,12 +18,15 @@
             'Artificial Intelligence': 4,
             'Big Data': 3,
             'Computer Vision': 4,
+            'Data Engineering': 0,
             'Data Science': 10,
             'Deep Learning': 4,
+            'Digital Image Processing': 0,
             'Ethics': 1,
             'Large Language Models': 1,
             'Machine Learning': 12,
             'Math for Machine Learning': 8,
+            'NLP': 1,
             'Natural Language Processing': 1,
             'Python': 5,
             'Statistics': 4,
@@ -39,7 +42,7 @@
                 type: 'center',
                 description: 'Central hub for all Data Science learning materials',
                 materials: '55+ resources',
-                url: '/static/app/browse.html'
+                url: '/app/browse.html'
             },
         
             // Core ML/AI cluster
@@ -477,14 +480,29 @@ canvas.addEventListener('mousedown', (e) => {
         // --- Add this new function ---
 async function loadDynamicSidebar() {
     try {
+        const fetchJson = async (url, label) => {
+            const response = await fetch(url);
+            const rawBody = await response.text();
+
+            if (!response.ok) {
+                const preview = rawBody.slice(0, 200) || 'No response body';
+                throw new Error(`${label} request failed (${response.status} ${response.statusText}). Received: ${preview}`);
+            }
+
+            try {
+                return JSON.parse(rawBody);
+            } catch (parseError) {
+                const preview = rawBody.slice(0, 200) || 'No response body';
+                throw new Error(`${label} did not return valid JSON. Received: ${preview}`);
+            }
+        };
+
         // Get all materials
-        const resBrowse = await fetch('/api/library/browse');
-        const dataBrowse = await resBrowse.json();
+        const dataBrowse = await fetchJson('/api/library/browse', 'Browse');
         const materials = dataBrowse.materials;
 
         // Get all unique topics
-        const resTopics = await fetch('/api/library/topics');
-        const dataTopics = await resTopics.json();
+        const dataTopics = await fetchJson('/api/library/topics', 'Topics');
 
         const listContainer = document.getElementById('dynamic-browse-list');
         listContainer.innerHTML = ''; // Clear "Loading..."
