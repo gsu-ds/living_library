@@ -6,7 +6,7 @@ venv/
 __pycache__/
 *.pyc
 # Environment variables
-.env
+
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 # Log files
