@@ -477,14 +477,29 @@ canvas.addEventListener('mousedown', (e) => {
         // --- Add this new function ---
 async function loadDynamicSidebar() {
     try {
+        const fetchJson = async (url, label) => {
+            const response = await fetch(url);
+            const rawBody = await response.text();
+
+            if (!response.ok) {
+                const preview = rawBody.slice(0, 200) || 'No response body';
+                throw new Error(`${label} request failed (${response.status} ${response.statusText}). Received: ${preview}`);
+            }
+
+            try {
+                return JSON.parse(rawBody);
+            } catch (parseError) {
+                const preview = rawBody.slice(0, 200) || 'No response body';
+                throw new Error(`${label} did not return valid JSON. Received: ${preview}`);
+            }
+        };
+
         // Get all materials
-        const resBrowse = await fetch('/api/library/browse');
-        const dataBrowse = await resBrowse.json();
+        const dataBrowse = await fetchJson('/api/library/browse', 'Browse');
         const materials = dataBrowse.materials;
 
         // Get all unique topics
-        const resTopics = await fetch('/api/library/topics');
-        const dataTopics = await resTopics.json();
+        const dataTopics = await fetchJson('/api/library/topics', 'Topics');
 
         const listContainer = document.getElementById('dynamic-browse-list');
         listContainer.innerHTML = ''; // Clear "Loading..."
