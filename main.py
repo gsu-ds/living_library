@@ -36,7 +36,12 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
-PDF_BASE_DIR = Path(os.getenv("PDF_BASE_DIR", "./pdfs"))
+if not DATABASE_URL:
+    print("Error: DATABASE_URL environment variable is not set.")
+    # We might choose to exit here, or let the engine creation fail.
+    # For now, we will print a loud error but let it proceed to standard exception handling.
+
+PDF_BASE_DIR = Path(os.getenv("PDF_BASE_DIR", BASE_DIR / "pdfs"))
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
@@ -49,13 +54,17 @@ else:
 # Global embedding model (loaded once at startup)
 embedding_model = None
 
-# Database engine
+# Database engine configuration
+# Disable prepared statements for Supabase Transaction Pooler compatibility (port 6543)
+connect_args = {"statement_cache_size": 0}
+
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,  # Set to True for SQL debugging
     pool_pre_ping=True,
     pool_size=10,
-    max_overflow=20
+    max_overflow=20,
+    connect_args=connect_args
 )
 
 # Session factory
