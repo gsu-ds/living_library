@@ -801,6 +801,7 @@ async def get_duplicates(status: str = "pending"):
 
 
 # Mount static files (for serving HTML/CSS/JS)
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.mount("/assets", StaticFiles(directory=BASE_DIR / "static/assets"), name="assets")
 app.mount("/app", StaticFiles(directory=BASE_DIR / "static/app"), name="app")
 
