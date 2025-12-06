@@ -20,8 +20,8 @@ from dotenv import load_dotenv
 from supabase import Client, create_client
 import io
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import text, select, event
-from pgvector.asyncpg import register_vector
+from sqlalchemy.pool import NullPool
+from sqlalchemy import text, select
 from sentence_transformers import SentenceTransformer
 import fitz  # PyMuPDF
 from pathlib import Path
@@ -50,32 +50,19 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     print("Warning: SUPABASE_URL or SUPABASE_KEY not set in environment variables.")
-    supabase_client: Client = None
+    supabase_client: Optional[Client] = None
 else:
     supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Global embedding model (loaded once at startup)
 embedding_model = None
 
-# Database engine configuration
-# Disable prepared statements for Supabase Transaction Pooler compatibility (port 6543)
-connect_args = {"statement_cache_size": 0}
-
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,  # Set to True for SQL debugging
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-    connect_args=connect_args
+    poolclass=NullPool,  # Disable connection pooling for transaction pooler
+    connect_args={"prepared_statement_cache_size": 0}
 )
-
-
-@event.listens_for(engine.sync_engine, "connect")
-def _register_vector(dbapi_connection, connection_record):
-    """Ensure pgvector types are registered for each connection."""
-
-    register_vector(dbapi_connection)
 
 # Session factory
 async_session = async_sessionmaker(
@@ -413,30 +400,25 @@ async def get_topics():
 async def semantic_search(request: SearchRequest):
     """
     Perform a semantic search using vector embeddings.
-
-    Encodes the search query into a vector and finds the most similar text chunks
-    stored in the database using cosine similarity (via the `<=>` operator).
-
-    Args:
-        request (SearchRequest): The search request object containing the query and filters.
-
-    Returns:
-        dict: A dictionary containing the original query and a list of matching results.
-
-    Raises:
-        HTTPException:
-            - 503: If the embedding model is not loaded.
-            - 500: If a database error occurs.
     """
     if not embedding_model:
         raise HTTPException(status_code=503, detail="Embedding model not loaded")
     
-    async with async_session() as session:
+    import asyncpg
+    
+    # Get raw connection string
+    db_url = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+    
+    try:
+        # Create query embedding
+        query_embedding = embedding_model.encode(request.query).tolist()
+        embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
+        
+        # Connect directly with asyncpg
+        conn = await asyncpg.connect(db_url)
+        
         try:
-            # Create query embedding
-            query_embedding = embedding_model.encode(request.query).tolist()
-            
-            # Build SQL query with filters
+            # Build base query
             query_sql = """
                 SELECT 
                     tc.chunk_id,
@@ -444,14 +426,14 @@ async def semantic_search(request: SearchRequest):
                     m.title,
                     tc.page_number,
                     tc.chunk_text,
-                    1 - (ce.embedding <=> :embedding::vector) AS similarity
+                    1 - (ce.embedding <=> $1::vector) AS similarity
                 FROM chunk_embedding ce
                 JOIN text_chunk tc ON tc.chunk_id = ce.chunk_id
                 JOIN file_asset fa ON fa.file_id = tc.file_id
                 JOIN material m ON m.material_id = fa.material_id
             """
             
-            params = {"embedding": query_embedding}
+            params = [embedding_str]
             where_clauses = []
             
             if request.topic:
@@ -459,46 +441,47 @@ async def semantic_search(request: SearchRequest):
                     JOIN material_topic mt ON mt.material_id = m.material_id
                     JOIN topic t ON t.topic_id = mt.topic_id
                 """
-                where_clauses.append("t.topic_name = :topic")
-                params['topic'] = request.topic
+                where_clauses.append(f"t.topic_name = ${len(params) + 1}")
+                params.append(request.topic)
             
             if request.year_min:
-                where_clauses.append("m.year >= :year_min")
-                params['year_min'] = request.year_min
+                where_clauses.append(f"m.year >= ${len(params) + 1}")
+                params.append(request.year_min)
             
             if request.year_max:
-                where_clauses.append("m.year <= :year_max")
-                params['year_max'] = request.year_max
+                where_clauses.append(f"m.year <= ${len(params) + 1}")
+                params.append(request.year_max)
             
             if where_clauses:
                 query_sql += " WHERE " + " AND ".join(where_clauses)
             
-            query_sql += """
-                ORDER BY ce.embedding <=> :embedding::vector
-                LIMIT :limit
+            query_sql += f"""
+                ORDER BY ce.embedding <=> $1::vector
+                LIMIT ${len(params) + 1}
             """
-            params['limit'] = request.limit
+            params.append(request.limit)
             
-            result = await session.execute(text(query_sql), params)
-            results = result.fetchall()
+            results = await conn.fetch(query_sql, *params)
             
             return {
                 "query": request.query,
                 "results": [
                     {
-                        "chunk_id": r[0],
-                        "material_id": r[1],
-                        "title": r[2],
-                        "page_number": r[3],
-                        "chunk_text": r[4][:500],  # Truncate for display
-                        "similarity": float(r[5])
+                        "chunk_id": r['chunk_id'],
+                        "material_id": r['material_id'],
+                        "title": r['title'],
+                        "page_number": r['page_number'],
+                        "chunk_text": r['chunk_text'][:500],
+                        "similarity": float(r['similarity'])
                     }
                     for r in results
                 ]
             }
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
+        finally:
+            await conn.close()
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/pdf/{material_id}/page/{page_num}")
 async def get_pdf_page(material_id: int, page_num: int):
@@ -524,170 +507,89 @@ async def get_pdf_page(material_id: int, page_num: int):
     doc = None  # PyMuPDF document
 
     async with async_session() as session:
-
         try:
-
             # Get file info, NOW including storage_bucket
-
             result = await session.execute(
-
                 text("""
-
                     SELECT
-
                         fa.storage_path,
-
                         fa.storage_provider,
-
                         fa.storage_bucket,
-
                         fa.is_accessible
-
                     FROM file_asset fa
-
                     WHERE fa.material_id = :material_id
-
                     AND fa.is_primary = TRUE
-
                     LIMIT 1
-
                 """),
-
                 {"material_id": material_id}
-
             )
-
             file_info = result.fetchone()
-
            
-
             if not file_info:
-
                 raise HTTPException(status_code=404, detail="File metadata not found in database")
-
            
-
             # Unpack the data from the query
-
             storage_path, storage_provider, storage_bucket, is_accessible = file_info
 
-
-
             if not is_accessible:
-
                 raise HTTPException(status_code=403, detail="File not accessible")
 
-
-
             # --- NEW HYBRID LOGIC ---
-
            
-
             if storage_provider == 'supabase':
-
                 # --- CASE 1: Get from Supabase Storage ---
-
                 if not supabase_client:
-
                     raise HTTPException(status_code=500, detail="Supabase client not configured")
-
                
-
                 if not storage_bucket:
-
                     raise HTTPException(status_code=500, detail="Supabase file is missing storage_bucket")
 
-
-
                 try:
-
                     # storage_path is just the filename, e.g., "my_book.pdf"
-
                     # storage_bucket is "living_library_materials"
-
                     file_bytes = supabase_client.storage.from_(storage_bucket).download(storage_path)
-
                     doc = fitz.open(stream=file_bytes, filetype="pdf")
-
                
-
                 except Exception as e:
-
                     print(f"Error downloading from Supabase: {e}")
-
                     raise HTTPException(status_code=500, detail=f"Failed to download from Supabase: {storage_bucket}/{storage_path}")
 
-
-
             else:  
-
-                # --- CASE 2: Get from Local 'onedrive' folder ---
-
+                # --- CASE 2: Get from Local folder ---
                 # storage_path is "data_pdfs/my_book.pdf"
-
                 pdf_path = PDF_BASE_DIR / storage_path
-
                
-
                 if not pdf_path.exists():
-
                     print(f"File not found on disk: {pdf_path}")
-
                     raise HTTPException(status_code=404, detail="PDF file not found on disk")
-
                
-
                 doc = fitz.open(pdf_path)
-
            
-
             # --- END HYBRID LOGIC ---
 
-
-
             if not doc:
-
                 raise HTTPException(status_code=500, detail="Failed to open PDF document")
 
-
-
             if page_num < 1 or page_num > len(doc):
-
                 doc.close()
-
                 raise HTTPException(status_code=404, detail="Page not found in document")
-
            
-
             # Render page as image
-
             page = doc[page_num - 1]
-
             pix = page.get_pixmap(dpi=150)
-
             img_bytes = pix.tobytes("png")
-
             doc.close()
-
            
-
             return Response(content=img_bytes, media_type="image/png")
-
            
-
         except HTTPException:
-
             if doc: doc.close()
-
             raise
-
         except Exception as e:
-
             if doc: doc.close()
-
             print(f"Unexpected error in get_pdf_page: {e}")
-
             raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/material/{material_id}/info")
 async def get_material_info(material_id: int):
@@ -751,12 +653,13 @@ async def get_material_info(material_id: int):
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Could not get Supabase URL: {e}")
 
-        else: # 'onedrive' or local
+        else:  # 'local' or other
             return {
                 "title": title,
                 "type": "local"
                 # We will use the page-by-page API for local files
             }
+
         
 @app.get("/api/duplicates")
 async def get_duplicates(status: str = "pending"):
@@ -821,7 +724,7 @@ if __name__ == "__main__":
     from rich.logging import RichHandler
 
     # --- New Logging Setup ---
-    LOG_FILE = "living_library.log" # The file to save logs to
+    LOG_FILE = "living_library.log"  # The file to save logs to
     
     # 1. Clear any existing handlers
     logging.root.handlers = []
@@ -846,7 +749,7 @@ if __name__ == "__main__":
         level="INFO",
         format="%(message)s",
         datefmt="[%X]",
-        handlers=[console_handler, file_handler] # Send logs to both places
+        handlers=[console_handler, file_handler]  # Send logs to both places
     )
     
     # Silence Uvicorn's default loggers

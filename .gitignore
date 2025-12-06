@@ -1,13 +1,29 @@
-# Python virtual environment
-libvenv/
-*venv/
-venv/
-# Python cache files
+# Environment variables (NEVER commit this!)
+.env
+
+# Python
 __pycache__/
 *.pyc
-# Environment variables
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
 
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-# Log files
+# Logs
 *.log
+living_library.log
+
+# PDFs (too large for git)
+*.pdf
+assets/pdfs/
+assets/data_pdfs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
