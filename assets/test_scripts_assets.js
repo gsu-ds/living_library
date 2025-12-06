@@ -19,12 +19,15 @@
             'Big Data': 3,
             'Computer Vision': 4,
             'Data Analysis': 0,
+            'Data Engineering': 0,
             'Data Science': 10,
             'Deep Learning': 4,
+            'Digital Image Processing': 0,
             'Ethics': 1,
             'Large Language Models': 1,
             'Machine Learning': 12,
             'Math for Machine Learning': 8,
+            'NLP': 1,
             'Natural Language Processing': 1,
             'Python': 5,
             'Statistics': 4,
@@ -43,52 +46,52 @@
                 url: '/app/browse.html'
             },
         
-            // Core Data Science node cluster
-            { 
-                id: 'ds', 
-                x: 0, 
-                y: -200, 
-                label: 'Data\nScience', 
+            // Core ML/AI cluster
+            {
+                id: 'ml',
+                x: 0,
+                y: -200,
+                label: 'Machine\nLearning',
                 type: 'circle',
-                description: '3 core fields walk into a bar...data analysis, computer science and statistics. Then they fusion dance. The end.',
-                materials: `${domainCounts['Data Science']} materials`
+                description: 'Core ML algorithms, theory, and applications',
+                materials: `${domainCounts['Machine Learning']} materials`
             },
-            { 
-                id: 'ai', 
-                x: -180, 
-                y: -150, 
-                label: 'Artificial\nIntelligence', 
+            {
+                id: 'ai',
+                x: -180,
+                y: -150,
+                label: 'Artificial\nIntelligence',
                 type: 'circle',
                 description: 'AI fundamentals, intelligent systems, and applications',
                 materials: `${domainCounts['Artificial Intelligence']} materials`
             },
-            { 
-                id: 'dl', 
-                x: 180, 
-                y: -150, 
-                label: 'Deep\nLearning', 
+            {
+                id: 'dl',
+                x: 180,
+                y: -150,
+                label: 'Deep\nLearning',
                 type: 'circle',
                 description: 'Neural networks, CNNs, RNNs, and modern architectures',
                 materials: `${domainCounts['Deep Learning']} materials`
             },
-            
+
             // Programming cluster (left)
-            { 
-                id: 'python', 
-                x: -280, 
-                y: 0, 
-                label: 'Python', 
+            {
+                id: 'python',
+                x: -280,
+                y: 0,
+                label: 'Python',
                 type: 'square',
                 description: 'Python programming, libraries, and best practices',
                 materials: `${domainCounts['Python']} materials`
             },
-            { 
-                id: 'ds', 
-                x: -220, 
-                y: 120, 
-                label: 'Data\nScience', 
+            {
+                id: 'ds',
+                x: -220,
+                y: 120,
+                label: 'Data\nScience',
                 type: 'circle',
-                description: '3 core fields walk into a bar...data analysis, computer science and statistics. Then they fusion dance. The end.',
+                description: 'Data analysis, visualization, and scientific computing',
                 materials: `${domainCounts['Data Science']} materials`
             },
             
